@@ -17,13 +17,20 @@ class MyWindow(QMainWindow):
         tb = self.addToolBar("File")
         fit = QAction(QIcon("icons/fit.png"), "fit", self)
         tb.addAction(fit)
-        rand = QAction(QIcon("icons/icons8-random-64"), "random", self)
+        rand = QAction(QIcon("icons/random"), "random", self)
         tb.addAction(rand)
+        dialog = QAction(QIcon("icons/config.png"), "dialog", self)
+        tb.addAction(dialog)
+        export = QAction(QIcon("icons/export"), "export", self)
+        tb.addAction(export)
         tb.actionTriggered[QAction].connect(self.tbpressed)
-
 
     def tbpressed(self, a):
         if a.text() == "fit":
             self.canvas.fitWorldToViewport()
+        elif a.text() == "dialog":
+            self.canvas.showDialog()
+        elif a.text() == "export":
+            self.canvas.export()
         if a.text() == "random":
             self.canvas.genRandomPoints()

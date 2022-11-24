@@ -41,6 +41,7 @@ class MyModel:
     def __init__(self):
         self.m_verts = []
         self.m_curves = []
+        self.malha = []
 
     def setVerts(self, _x, _y):
         self.m_verts.append(MyPoint(_x, _y))

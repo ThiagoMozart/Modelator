@@ -1,6 +1,9 @@
+import json
+
 from PyQt5 import QtOpenGL, QtCore
 from OpenGL.GL import *
 from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QDialog, QVBoxLayout, QLabel, QLineEdit, QPushButton
 
 from he.hecontroller import HeController
 from he.hemodel import HeModel
@@ -10,10 +13,31 @@ from compgeom.tesselation import Tesselation
 from random import random, randint
 
 
+class InputDialog(QDialog):
+    def __init__(self, title='Input', label="Dialog"):
+        super().__init__()
+        self.setWindowTitle(title)
+        self.setWindowModality(Qt.ApplicationModal)
+
+        lineE = QLineEdit()
+        self.lineEdits = [lineE]
+
+        self.layout = QVBoxLayout()
+        self.layout.addWidget(QLabel("{}:".format(label)))
+        self.layout.addWidget(lineE)
+
+        self.pushButton = QPushButton("Confirmar")
+        self.pushButton.clicked.connect(self.accept)
+        self.layout.addWidget(self.pushButton)
+
+        self.setLayout(self.layout)
+
+
 class MyCanvas(QtOpenGL.QGLWidget):
 
     def __init__(self):
         super(MyCanvas, self).__init__()
+        self.malha = []
         self.color_v = 1.0
         self.m_model = None
         self.m_w = 0
@@ -85,7 +109,7 @@ class MyCanvas(QtOpenGL.QGLWidget):
                     r = random()
                     b = random()
                     g = random()
-                    glColor3f(r, 0, g) #
+                    glColor3f(r, 0, g)
                     glBegin(GL_TRIANGLES)
                     glVertex2d(pts[triangs[j][0]].getX(), pts[triangs[j][0]].getY())
                     glVertex2d(pts[triangs[j][1]].getX(), pts[triangs[j][1]].getY())
@@ -98,10 +122,17 @@ class MyCanvas(QtOpenGL.QGLWidget):
                 r = random()
                 b = random()
                 g = random()
-                glColor3f(r, b, g) #
+                glColor3f(r, b, g)  #
                 glBegin(GL_LINES)
                 for i in range(2):
                     glVertex2f(ptc[i].getX(), ptc[i].getY())
+                glEnd()
+
+            points = self.m_hmodel.getPoints()
+            for point in self.malha:
+                glColor3f(3.0, 3.0, 3.0)
+                glBegin(GL_POINTS)
+                glVertex2f(point.getX(), point.getY())
                 glEnd()
         glEndList()
 
@@ -148,6 +179,56 @@ class MyCanvas(QtOpenGL.QGLWidget):
         glMatrixMode(GL_PROJECTION)
         glLoadIdentity()
         glOrtho(self.m_L, self.m_R, self.m_B, self.m_T, -1.0, 1.0)
+
+    def showDialog(self):
+        if self.m_hmodel.isEmpty():
+            return
+
+        default = 1.0
+        dialog = InputDialog(title="Dialog", label="Escolha o espaço entre os pontos: ")
+        dialog.exec()
+
+        if dialog.result() == 1:
+            try:
+                default = float(dialog.lineEdits[0].text())
+            except:
+                default = 1.0
+
+        if not (self.m_hmodel.isEmpty()):
+            patches = self.m_hmodel.getPatches()
+
+            for pat in patches:
+                pts = pat.getPoints()
+                x_min = pts[0].getX()
+                x_max = x_min
+                y_min = pts[0].getY()
+                y_max = y_min
+                for i in range(1, len(pts)):
+                    if pts[i].getX() < x_min:
+                        x_min = pts[i].getX()
+                    if pts[i].getX() > x_max:
+                        x_max = pts[i].getX()
+                    if pts[i].getY() < y_min:
+                        y_min = pts[i].getY()
+                    if pts[i].getY() > y_max:
+                        y_max = pts[i].getY()
+                x = []
+                y = []
+                x_min += default / 2
+                y_min += default / 2
+                while x_min < x_max:
+                    x.append(x_min)
+                    x_min += default
+                while y_min < y_max:
+                    y.append(y_min)
+                    y_min += default
+                for i in range(len(x)):
+                    for j in range(len(y)):
+                        if pat.isPointInside(Point(x[i], y[j])):
+                            self.malha.append(Point(x[i], y[j]))
+
+        self.update()
+        self.repaint()
 
     def convertPtCoordsToUniverse(self, _pt):
         dX = self.m_R - self.m_L
@@ -199,3 +280,10 @@ class MyCanvas(QtOpenGL.QGLWidget):
         self.m_pt0.setY(0)
         self.m_pt1.setX(0)
         self.m_pt1.setY(0)
+
+    def export(self):
+        _json = []
+        for point in self.malha:
+            _json.append({"x": point.getX(), "y": point.getY()})
+        with open("coordenadas.json", "w") as file:
+            json.dump(_json, file, indent=4)
