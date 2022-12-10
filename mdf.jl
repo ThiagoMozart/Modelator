@@ -1,4 +1,5 @@
 import JSON
+using LinearAlgebra
 
 
 function read_json()
@@ -25,47 +26,44 @@ matriz = Vector{Vector{Float64}}(data)
 matriz_len = length(matriz)
 line_tam = length(matriz[1])
 
-matriz_system = Vector{Float64}[]
-matriz_system_result = Float64[]
+matriz_system = Matrix{Int64}(undef,matriz_len,5)
+matriz_system_result = Vector{Float64}(undef,matriz_len)
 
 for i in 2:(matriz_len - 1)
     for j in 2:(line_tam - 1)
         if matriz[i][j] == -1.0
-            line_system = Vector{Float64}(undef, 5)
-            line_system[1] = 4.0
+            matriz_system[i,1] = 4.0
             total = 0.0
             baixo = matriz[i - 1][j]
             cima = matriz[i + 1][j]
             esquerda = matriz[i][j - 1]
             direita = matriz[i][j + 1]
             if baixo == -1.0
-                line_system[2] = -1.0
+                matriz_system[i,2] = -1.0
             else
                 total += baixo
             end
             if cima == -1.0
-                line_system[3] = -1.0
+                matriz_system[i,3] = -1.0
             else
                 total += cima
             end
             if esquerda == -1.0
-                line_system[4] = -1.0
+                matriz_system[i,4] = -1.0
             else
                 total += esquerda
             end
             if direita == -1.0
-                line_system[5] = -1.0
+                matriz_system[i,5] = -1.0
             else
                 total += direita
             end
-            push!(matriz_system, line_system)
-            push!(matriz_system_result, total)
+            matriz_system_result[i] = total
         end
     end
 end
 
-matriz_system_matriz = reduce(vcat,transpose.(matriz_system))
-T_result = matriz_system_matriz \ matriz_system_result
+T_result = matriz_system\matriz_system_result
 
 for i in 2:(matriz_len - 1)
     for j in 2:(line_tam - 1)
