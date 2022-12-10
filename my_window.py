@@ -21,6 +21,10 @@ class MyWindow(QMainWindow):
         tb.addAction(rand)
         dialog = QAction(QIcon("icons/config.png"), "dialog", self)
         tb.addAction(dialog)
+        temp = QAction(QIcon("icons/temp.png"), "temp", self)
+        tb.addAction(temp)
+        force = QAction(QIcon("icons/force.png"), "force", self)
+        tb.addAction(force)
         export = QAction(QIcon("icons/export"), "export", self)
         tb.addAction(export)
         tb.actionTriggered[QAction].connect(self.tbpressed)
@@ -31,6 +35,11 @@ class MyWindow(QMainWindow):
         elif a.text() == "dialog":
             self.canvas.showDialog()
         elif a.text() == "export":
-            self.canvas.export()
-        if a.text() == "random":
+            self.canvas.export_to_json()
+        elif a.text() == "random":
             self.canvas.genRandomPoints()
+        elif a.text() == "temp":
+            self.canvas.set_up_temp()
+        elif a.text() == "force":
+            self.canvas.set_up_force()
+
